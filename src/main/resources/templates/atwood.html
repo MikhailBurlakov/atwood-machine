@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Машина Атвуда - Определение ускорения свободного падения</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.8;
+            z-index: -1;
+        }
+        h1 {
+            color: #e91e63;
+            text-align: center;
+            margin: 0;
+            font-size: 20px;
+            line-height: 1.4;
+        }
+        .title-container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 15px;
+            z-index: 1;
+        }
+        .left-panel {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+        .controls-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .parameters {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            width: 220px;
+            margin-top: -10px;
+        }
+        .planets {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 220px;
+        }
+        .planet-image-container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 600px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -45%);
+            z-index: 1;
+        }
+        .planet-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .planet-image.visible {
+            opacity: 1;
+        }
+        /* Относительные размеры планет (за 100% взят размер Юпитера) */
+        .planet-Mercury { transform: scale(0.8); }
+        .planet-Venus { transform: scale(1.4); }
+        .planet-Earth { transform: scale(1.5); }
+        .planet-Moon { transform: scale(0.5); }
+        .planet-Mars { transform: scale(0.9); }
+        .planet-Ganymede { transform: scale(0.8); }
+        .planet-сalisto { transform: scale(0.75); }
+        .planet-titanium { transform: scale(0.77); }
+        .planet-Pluto { transform: scale(0.4); }
+        h2 {
+            color: #333;
+            margin-top: 0;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .parameter-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            position: relative;
+        }
+        .parameter-row label {
+            width: auto;
+            margin-right: 6px;
+            display: flex;
+            align-items: center;
+        }
+        .parameter-row input {
+            width: 45px;
+            padding: 3px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 6px;
+        }
+        .parameter-row span {
+            color: #666;
+            font-size: 13px;
+        }
+        .parameter-row:first-child label { margin-right: 12px; }
+        .parameter-row:nth-child(2) label { margin-right: 11px; }
+        .parameter-row:last-child label { margin-right: 12px; }
+        .unit {
+            margin-left: 5px;
+            color: #666;
+            width: 20px;
+        }
+        .planet-option {
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .planet-option input[type="radio"] {
+            margin-right: 8px;
+        }
+        .controls {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-top: 12px;
+            width: 220px;
+        }
+        .stopwatch-container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 220px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        .stopwatch {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            background-image: url('/images/secundomer.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: block;
+        }
+        .stopwatch-hand {
+            position: absolute;
+            width: 2px;
+            height: 32px;
+            background-color: #f44336;
+            top: 62%;
+            left: 51%;
+            transform-origin: center bottom;
+            transform: translate(-50%, -100%) rotate(0deg);
+            transition: transform 0.01s linear;
+            z-index: 2;
+        }
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196f3;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+            min-width: 60px;
+        }
+        button.active {
+            background-color: #f44336;
+        }
+        button:hover {
+            filter: brightness(1.1);
+        }
+        #timer {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            text-align: right;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-container">
+        <h1>Определение ускорения свободного падения<br>на телах Солнечной системы при помощи машины Атвуда</h1>
+    </div>
+    
+    <div class="parameters">
+        <h2>Параметры установки</h2>
+        <div class="parameter-row">
+            <label>S =</label>
+            <input type="number" id="height" step="0.01" value="2.5">
+            <span class="unit">м</span>
+        </div>
+        <div class="parameter-row">
+            <label>M =</label>
+            <input type="number" id="massM" step="0.01" value="1.5">
+            <span class="unit">кг</span>
+        </div>
+        <div class="parameter-row">
+            <label>m =</label>
+            <input type="number" id="massm" step="0.01" value="1.0">
+            <span class="unit">кг</span>
+        </div>
+    </div>
+
+    <div class="planet-image-container">
+        <img src="/images/Earth.png" class="planet-image visible" id="planetImage" alt="Планета">
+    </div>
+
+    <div class="planets">
+        <h2>Тела Солнечной системы</h2>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Mercury" id="mercury">
+            <label for="mercury">Меркурий</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Venus" id="venus">
+            <label for="venus">Венера</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Earth" id="earth" checked>
+            <label for="earth">Земля</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Moon" id="moon">
+            <label for="moon">Луна</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Mars" id="mars">
+            <label for="mars">Марс</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Ganymede" id="ganymede">
+            <label for="ganymede">Ганимед</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="сalisto" id="callisto">
+            <label for="callisto">Калисто</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="titanium" id="titan">
+            <label for="titan">Титан</label>
+        </div>
+        <div class="planet-option">
+            <input type="radio" name="planet" value="Pluto" id="pluto">
+            <label for="pluto">Плутон</label>
+        </div>
+    </div>
+
+    <div class="stopwatch-container">
+        <div class="stopwatch">
+            <div class="stopwatch-hand"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="startPause">Пуск</button>
+        <button id="reset">Сброс</button>
+        <div id="timer">0.000 с</div>
+    </div>
+
+    <script>
+        let timer;
+        let isRunning = false;
+        let startTime;
+        let expectedTime = 0;
+        let pausedTime = 0;
+        const startPauseBtn = document.getElementById('startPause');
+        const hand = document.querySelector('.stopwatch-hand');
+
+        startPauseBtn.addEventListener('click', function() {
+            if (!isRunning) {
+                if (pausedTime === 0) {
+                    const height = parseFloat(document.getElementById('height').value);
+                    const massM = parseFloat(document.getElementById('massM').value);
+                    const massm = parseFloat(document.getElementById('massm').value);
+                    
+                    // Проверка на равенство масс
+                    if (Math.abs(massM - massm) < 0.0001) {
+                        alert('При равных массах грузов система находится в равновесии и движения не будет');
+                        return;
+                    }
+
+                    const planet = document.querySelector('input[name="planet"]:checked').value;
+                    
+                    // Ускорение свободного падения для разных тел (м/с²)
+                    const gravityValues = {
+                        'Mercury': 3.7,
+                        'Venus': 8.87,
+                        'Earth': 9.81,
+                        'Moon': 1.62,
+                        'Mars': 3.71,
+                        'Ganymede': 1.428,
+                        'сalisto': 1.235,
+                        'titanium': 1.352,
+                        'Pluto': 0.62
+                    };
+
+                    const g = gravityValues[planet];
+                    
+                    // Определяем, какая масса больше и считаем ускорение
+                    const biggerMass = Math.max(massM, massm);
+                    const smallerMass = Math.min(massM, massm);
+                    const a = g * (biggerMass - smallerMass) / (biggerMass + smallerMass);
+                    
+                    // Расчет времени падения
+                    expectedTime = Math.sqrt((2 * height) / a);
+                    
+                    // Если нижний груз тяжелее, показываем предупреждение
+                    if (massm > massM) {
+                        alert('Внимание: нижний груз тяжелее верхнего. Это приведет к движению системы в обратном направлении.');
+                    }
+                    
+                    startTimer();
+                } else {
+                    startTimer();
+                }
+            } else {
+                pauseTimer();
+            }
+        });
+
+        document.getElementById('reset').addEventListener('click', function() {
+            resetTimer();
+        });
+
+        function startTimer() {
+            isRunning = true;
+            startPauseBtn.textContent = 'Пауза';
+            startPauseBtn.classList.add('active');
+            startTime = Date.now() - (pausedTime * 1000);
+            
+            if (timer) {
+                clearInterval(timer);
+            }
+            
+            timer = setInterval(() => {
+                if (!isRunning) return;
+                
+                const elapsed = (Date.now() - startTime) / 1000;
+                if (elapsed >= expectedTime) {
+                    updateDisplay(expectedTime);
+                    clearInterval(timer);
+                    isRunning = false;
+                    pausedTime = 0;
+                    startPauseBtn.textContent = 'Пуск';
+                    startPauseBtn.classList.remove('active');
+                } else {
+                    updateDisplay(elapsed);
+                }
+            }, 10);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            startPauseBtn.textContent = 'Пуск';
+            startPauseBtn.classList.remove('active');
+            if (timer) {
+                clearInterval(timer);
+                const elapsed = (Date.now() - startTime) / 1000;
+                pausedTime = Math.min(elapsed, expectedTime);
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            pausedTime = 0;
+            if (timer) {
+                clearInterval(timer);
+            }
+            startPauseBtn.textContent = 'Пуск';
+            startPauseBtn.classList.remove('active');
+            updateDisplay(0);
+        }
+
+        function updateDisplay(time) {
+            document.getElementById('timer').textContent = time.toFixed(3) + ' с';
+            // Обновляем положение стрелки (полный оборот за 1 секунду)
+            const rotation = (time % 1) * 360;
+            hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
+        }
+
+        document.querySelectorAll('input[name="planet"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const planetImage = document.getElementById('planetImage');
+                planetImage.classList.remove('visible');
+                // Удаляем все классы планет
+                planetImage.className = 'planet-image';
+                setTimeout(() => {
+                    planetImage.src = `/images/${this.value}.png`;
+                    // Добавляем класс для новой планеты
+                    planetImage.classList.add(`planet-${this.value}`);
+                    planetImage.classList.add('visible');
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html> 
