@@ -310,7 +310,7 @@
         const startPauseBtn = document.getElementById('startPause');
         const hand = document.querySelector('.stopwatch-hand');
 
-        startPauseBtn.addEventListener('click', function() {
+        startPauseBtn.addEventListener('click', async function() {
             if (!isRunning) {
                 if (pausedTime === 0) {
                     const height = parseFloat(document.getElementById('height').value);
@@ -325,35 +325,33 @@
 
                     const planet = document.querySelector('input[name="planet"]:checked').value;
                     
-                    // Ускорение свободного падения для разных тел (м/с²)
-                    const gravityValues = {
-                        'Mercury': 3.7,
-                        'Venus': 8.87,
-                        'Earth': 9.81,
-                        'Moon': 1.62,
-                        'Mars': 3.71,
-                        'Ganymede': 1.428,
-                        'сalisto': 1.235,
-                        'titanium': 1.352,
-                        'Pluto': 0.62
-                    };
-
-                    const g = gravityValues[planet];
-                    
-                    // Определяем, какая масса больше и считаем ускорение
-                    const biggerMass = Math.max(massM, massm);
-                    const smallerMass = Math.min(massM, massm);
-                    const a = g * (biggerMass - smallerMass) / (biggerMass + smallerMass);
-                    
-                    // Расчет времени падения
-                    expectedTime = Math.sqrt((2 * height) / a);
-                    
-                    // Если нижний груз тяжелее, показываем предупреждение
-                    if (massm > massM) {
-                        alert('Внимание: нижний груз тяжелее верхнего. Это приведет к движению системы в обратном направлении.');
+                    try {
+                        // Отправляем запрос на сервер для расчета времени
+                        const response = await fetch('/calculate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `height=${height}&massM=${massM}&massm=${massm}&planet=${planet}`
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Ошибка при расчете времени');
+                        }
+                        
+                        const data = await response.json();
+                        expectedTime = parseFloat(data.fallTime);
+                        
+                        // Если нижний груз тяжелее, показываем предупреждение
+                        if (massm > massM) {
+                            alert('Внимание: нижний груз тяжелее верхнего. Это приведет к движению системы в обратном направлении.');
+                        }
+                        
+                        startTimer();
+                    } catch (error) {
+                        alert('Произошла ошибка при расчете времени: ' + error.message);
+                        return;
                     }
-                    
-                    startTimer();
                 } else {
                     startTimer();
                 }
