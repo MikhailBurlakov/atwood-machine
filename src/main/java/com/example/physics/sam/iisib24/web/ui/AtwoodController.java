@@ -25,19 +25,21 @@ public class AtwoodController {
     @ResponseBody
     public Map<String, Object> calculate(
             @RequestParam double height,
-            @RequestParam double massM,
-            @RequestParam double massm,
+            @RequestParam double BigMass,
+            @RequestParam double SmallMass,
             @RequestParam String planet) {
         
         atwoodMachine.setHeight(height);
-        atwoodMachine.setMassM(massM);
-        atwoodMachine.setMassm(massm);
+        atwoodMachine.setMassM(BigMass);
+        atwoodMachine.setMassm(SmallMass);
         atwoodMachine.setSelectedPlanet(planet);
 
         double fallTime = atwoodMachine.calculateFallTime();
+        double gravity = atwoodMachine.getPlanetGravity();
 
         Map<String, Object> response = new HashMap<>();
         response.put("fallTime", String.format("%.3f", fallTime));
+        response.put("gravity", String.format("%.2f", gravity));
         return response;
     }
 } 

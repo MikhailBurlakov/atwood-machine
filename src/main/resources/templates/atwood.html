@@ -103,8 +103,8 @@
         .planet-Moon { transform: scale(0.5); }
         .planet-Mars { transform: scale(0.9); }
         .planet-Ganymede { transform: scale(0.8); }
-        .planet-сalisto { transform: scale(0.75); }
-        .planet-titanium { transform: scale(0.77); }
+        .planet-Callisto { transform: scale(0.75); }
+        .planet-Titan { transform: scale(0.77); }
         .planet-Pluto { transform: scale(0.4); }
         h2 {
             color: #333;
@@ -219,6 +219,19 @@
             text-align: right;
             margin-left: auto;
         }
+        .atwood-machine-container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 300px;
+            height: 400px;
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-45%);
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
@@ -235,18 +248,41 @@
         </div>
         <div class="parameter-row">
             <label>M =</label>
-            <input type="number" id="massM" step="0.01" value="1.5">
+            <input type="number" id="BigMass" step="0.01" value="1.5">
             <span class="unit">кг</span>
         </div>
         <div class="parameter-row">
             <label>m =</label>
-            <input type="number" id="massm" step="0.01" value="1.0">
+            <input type="number" id="SmallMass" step="0.01" value="1.0">
             <span class="unit">кг</span>
         </div>
     </div>
 
     <div class="planet-image-container">
         <img src="/images/Earth.png" class="planet-image visible" id="planetImage" alt="Планета">
+        <div id="gravityValue" style="position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 16px; font-weight: bold; color: #333;">g = 9.81 м/с²</div>
+    </div>
+
+    <div class="atwood-machine-container">
+        <h2 style="text-align: center; margin-bottom: 20px;">Машина Атвуда</h2>
+        <div id="atwoodMachine" style="width: 100%; height: 300px; background: rgba(255, 255, 255, 0.9); border-radius: 8px; position: relative;">
+            <!-- Здесь будет SVG-визуализация -->
+            <svg id="atwoodSVG" width="260" height="360" viewBox="0 0 260 360">
+                <!-- Блок -->
+                <circle cx="130" cy="60" r="45" stroke="black" stroke-width="3" fill="white" />
+                <circle cx="130" cy="60" r="4" fill="black" />
+                <!-- Левая нить -->
+                <line id="leftRope" x1="85" y1="60" x2="85" y2="220" stroke="black" stroke-width="2" />
+                <!-- Правая нить -->
+                <line id="rightRope" x1="175" y1="60" x2="175" y2="220" stroke="black" stroke-width="2" />
+                <!-- Левый груз -->
+                <rect id="leftWeight" x="65" y="220" width="40" height="40" fill="white" stroke="black" stroke-width="2" />
+                <!-- Правый груз -->
+                <rect id="rightWeight" x="155" y="220" width="40" height="40" fill="white" stroke="black" stroke-width="2" />
+                <!-- Опора -->
+                <rect x="0" y="340" width="260" height="10" fill="#222" />
+            </svg>
+        </div>
     </div>
 
     <div class="planets">
@@ -276,11 +312,11 @@
             <label for="ganymede">Ганимед</label>
         </div>
         <div class="planet-option">
-            <input type="radio" name="planet" value="сalisto" id="callisto">
+            <input type="radio" name="planet" value="Callisto" id="callisto">
             <label for="callisto">Калисто</label>
         </div>
         <div class="planet-option">
-            <input type="radio" name="planet" value="titanium" id="titan">
+            <input type="radio" name="planet" value="Titan" id="titan">
             <label for="titan">Титан</label>
         </div>
         <div class="planet-option">
@@ -314,11 +350,11 @@
             if (!isRunning) {
                 if (pausedTime === 0) {
                     const height = parseFloat(document.getElementById('height').value);
-                    const massM = parseFloat(document.getElementById('massM').value);
-                    const massm = parseFloat(document.getElementById('massm').value);
+                    const BigMass = parseFloat(document.getElementById('BigMass').value);
+                    const SmallMass = parseFloat(document.getElementById('SmallMass').value);
                     
                     // Проверка на равенство масс
-                    if (Math.abs(massM - massm) < 0.0001) {
+                    if (Math.abs(BigMass - SmallMass) < 0.0001) {
                         alert('При равных массах грузов система находится в равновесии и движения не будет');
                         return;
                     }
@@ -332,7 +368,7 @@
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
-                            body: `height=${height}&massM=${massM}&massm=${massm}&planet=${planet}`
+                            body: `height=${height}&BigMass=${BigMass}&SmallMass=${SmallMass}&planet=${planet}`
                         });
                         
                         if (!response.ok) {
@@ -341,9 +377,10 @@
                         
                         const data = await response.json();
                         expectedTime = parseFloat(data.fallTime);
+                        document.getElementById('gravityValue').textContent = `g = ${data.gravity} м/с²`;
                         
                         // Если нижний груз тяжелее, показываем предупреждение
-                        if (massm > massM) {
+                        if (SmallMass > BigMass) {
                             alert('Внимание: нижний груз тяжелее верхнего. Это приведет к движению системы в обратном направлении.');
                         }
                         
@@ -411,6 +448,10 @@
             startPauseBtn.textContent = 'Пуск';
             startPauseBtn.classList.remove('active');
             updateDisplay(0);
+            leftWeight.setAttribute('y', 220);
+            leftRope.setAttribute('y2', 220);
+            rightWeight.setAttribute('y', 220);
+            rightRope.setAttribute('y2', 260);
         }
 
         function updateDisplay(time) {
@@ -418,6 +459,7 @@
             // Обновляем положение стрелки (полный оборот за 1 секунду)
             const rotation = (time % 1) * 360;
             hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
+            animateWeights(time, expectedTime || 1);
         }
 
         document.querySelectorAll('input[name="planet"]').forEach(radio => {
@@ -431,9 +473,50 @@
                     // Добавляем класс для новой планеты
                     planetImage.classList.add(`planet-${this.value}`);
                     planetImage.classList.add('visible');
+                    
+                    // Обновляем значение g при смене планеты
+                    const height = parseFloat(document.getElementById('height').value);
+                    const BigMass = parseFloat(document.getElementById('BigMass').value);
+                    const SmallMass = parseFloat(document.getElementById('SmallMass').value);
+                    
+                    fetch('/calculate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `height=${height}&BigMass=${BigMass}&SmallMass=${SmallMass}&planet=${this.value}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('gravityValue').textContent = `g = ${data.gravity} м/с²`;
+                    });
                 }, 300);
             });
         });
+
+        // Вставляем после функции updateDisplay
+        // --- Анимация грузика ---
+        const leftWeight = document.getElementById('leftWeight');
+        const rightWeight = document.getElementById('rightWeight');
+        const leftRope = document.getElementById('leftRope');
+        const rightRope = document.getElementById('rightRope');
+        const startY = 220;
+        const endY = 300; // конечная позиция (можно скорректировать)
+        const ropeStartY = 60;
+        const ropeEndY = 300;
+
+        function animateWeights(time, totalTime) {
+            // Доля пройденного пути
+            let progress = Math.min(time / totalTime, 1);
+            // Левый грузик опускается
+            let newY = startY + (endY - startY) * progress;
+            leftWeight.setAttribute('y', newY);
+            leftRope.setAttribute('y2', newY);
+            // Правый грузик поднимается
+            let newYRight = startY - (endY - startY) * progress;
+            rightWeight.setAttribute('y', newYRight);
+            rightRope.setAttribute('y2', newYRight + 40);
+        }
     </script>
 </body>
 </html> 
