@@ -34,7 +34,7 @@ public class AtwoodMachine {
         return (bigMass - smallMass) * g / (bigMass + smallMass);
     }
 
-    private double getPlanetGravity() {
+    public double getPlanetGravity() {
         return switch (selectedPlanet) {
             case "Mercury" -> G_MERCURY;
             case "Venus" -> G_VENUS;
