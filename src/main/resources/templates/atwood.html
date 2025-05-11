@@ -267,20 +267,26 @@
         <h2 style="text-align: center; margin-bottom: 20px;">Машина Атвуда</h2>
         <div id="atwoodMachine" style="width: 100%; height: 300px; background: rgba(255, 255, 255, 0.9); border-radius: 8px; position: relative;">
             <!-- Здесь будет SVG-визуализация -->
-            <svg id="atwoodSVG" width="260" height="360" viewBox="0 0 260 360">
+            <svg id="atwoodSVG" width="260" height="400" viewBox="0 0 260 400">
                 <!-- Блок -->
                 <circle cx="130" cy="60" r="45" stroke="black" stroke-width="3" fill="white" />
                 <circle cx="130" cy="60" r="4" fill="black" />
+                <text x="70" y="60" font-family="Arial" font-size="20"
+                      text-anchor="middle" dominant-baseline="middle" fill="black">S</text>
                 <!-- Левая нить -->
                 <line id="leftRope" x1="85" y1="60" x2="85" y2="220" stroke="black" stroke-width="2" />
                 <!-- Правая нить -->
                 <line id="rightRope" x1="175" y1="60" x2="175" y2="220" stroke="black" stroke-width="2" />
                 <!-- Левый груз -->
-                <rect id="leftWeight" x="65" y="220" width="40" height="40" fill="white" stroke="black" stroke-width="2" />
+                <rect id="leftWeight" x="55" y="220" width="60" height="60" fill="white" stroke="black" stroke-width="2" />
+                <text x="85" y="315" font-family="Arial" font-size="20"
+                      text-anchor="middle" dominant-baseline="middle" fill="black">M</text>
                 <!-- Правый груз -->
                 <rect id="rightWeight" x="155" y="220" width="40" height="40" fill="white" stroke="black" stroke-width="2" />
+                <text x="175" y="300" font-family="Arial" font-size="16"
+                      text-anchor="middle" dominant-baseline="middle" fill="black">m</text>
                 <!-- Опора -->
-                <rect x="0" y="340" width="260" height="10" fill="#222" />
+                <rect x="0" y="360" width="260" height="10" fill="#222" />
             </svg>
         </div>
     </div>
@@ -377,6 +383,7 @@
                         
                         const data = await response.json();
                         expectedTime = parseFloat(data.fallTime);
+                        console.log("Время с бэка (как число):", expectedTime);
                         document.getElementById('gravityValue').textContent = `g = ${data.gravity} м/с²`;
                         
                         // Если нижний груз тяжелее, показываем предупреждение
@@ -448,74 +455,79 @@
             startPauseBtn.textContent = 'Пуск';
             startPauseBtn.classList.remove('active');
             updateDisplay(0);
-            leftWeight.setAttribute('y', 220);
-            leftRope.setAttribute('y2', 220);
-            rightWeight.setAttribute('y', 220);
-            rightRope.setAttribute('y2', 260);
-        }
-
-        function updateDisplay(time) {
-            document.getElementById('timer').textContent = time.toFixed(3) + ' с';
-            // Обновляем положение стрелки (полный оборот за 1 секунду)
-            const rotation = (time % 1) * 360;
-            hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
-            animateWeights(time, expectedTime || 1);
+            // Возвращаем грузы в исходное положение
+            leftWeight.setAttribute('y', startY);
+            leftRope.setAttribute('y2', startY + 30);
+            rightWeight.setAttribute('y', startY);
+            rightRope.setAttribute('y2', startY + 20);
         }
 
         document.querySelectorAll('input[name="planet"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const planetImage = document.getElementById('planetImage');
+                const gravityValue = document.getElementById('gravityValue');
+
+                // 1. Плавно скрываем текущее изображение
                 planetImage.classList.remove('visible');
-                // Удаляем все классы планет
+
+                // 2. Очищаем классы планеты
                 planetImage.className = 'planet-image';
+
+                // 3. Скрываем значение g при смене планеты
+                gravityValue.textContent = '';
+
+                // 4. Задержка для плавности анимации
                 setTimeout(() => {
+                    // 5. Обновляем изображение
                     planetImage.src = `/images/${this.value}.png`;
-                    // Добавляем класс для новой планеты
+
+                    // 6. Добавляем классы для новой планеты
                     planetImage.classList.add(`planet-${this.value}`);
                     planetImage.classList.add('visible');
-                    
-                    // Обновляем значение g при смене планеты
-                    const height = parseFloat(document.getElementById('height').value);
-                    const BigMass = parseFloat(document.getElementById('BigMass').value);
-                    const SmallMass = parseFloat(document.getElementById('SmallMass').value);
-                    
-                    fetch('/calculate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `height=${height}&BigMass=${BigMass}&SmallMass=${SmallMass}&planet=${this.value}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('gravityValue').textContent = `g = ${data.gravity} м/с²`;
-                    });
                 }, 300);
             });
         });
 
-        // Вставляем после функции updateDisplay
+        function updateDisplay(time) {
+            const formattedTime = time.toFixed(3);
+            document.getElementById('timer').textContent = `${formattedTime} с`;
+            const rotation = (time % 60) * 6;
+            hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
+
+            animateWeights(time, expectedTime);
+        }
+
         // --- Анимация грузика ---
         const leftWeight = document.getElementById('leftWeight');
         const rightWeight = document.getElementById('rightWeight');
         const leftRope = document.getElementById('leftRope');
         const rightRope = document.getElementById('rightRope');
         const startY = 220;
+        const maxTravelDistance = 80; // Максимальная дистанция движения
         const endY = 300; // конечная позиция (можно скорректировать)
         const ropeStartY = 60;
         const ropeEndY = 300;
+        const leftLabel = document.querySelector('#leftWeight + text');
+        const rightLabel = document.querySelector('#rightWeight + text');
 
         function animateWeights(time, totalTime) {
-            // Доля пройденного пути
-            let progress = Math.min(time / totalTime, 1);
-            // Левый грузик опускается
-            let newY = startY + (endY - startY) * progress;
-            leftWeight.setAttribute('y', newY);
-            leftRope.setAttribute('y2', newY);
-            // Правый грузик поднимается
-            let newYRight = startY - (endY - startY) * progress;
-            rightWeight.setAttribute('y', newYRight);
-            rightRope.setAttribute('y2', newYRight + 40);
+            const progress = Math.min(time / totalTime, 1);
+            // Добавляем "замедление" в начале и конце
+            const easedProgress = 0.5 * (1 - Math.cos(progress * Math.PI));
+            const distance = maxTravelDistance * easedProgress;
+
+            // Левый груз опускается
+            const leftY = startY + distance;
+            leftWeight.setAttribute('y', leftY);
+            leftRope.setAttribute('y2', leftY + 30); // +30 чтобы нить крепилась к центру
+
+            // Правый груз поднимается
+            const rightY = startY - distance;
+            rightWeight.setAttribute('y', Math.max(rightY, 60)); // Не выше блока
+            rightRope.setAttribute('y2', rightY + 20); // +20 чтобы нить крепилась к центру
+            // Обновляем позиции текста
+            leftLabel.setAttribute('y', leftY + 30);
+            rightLabel.setAttribute('y', rightY + 20);
         }
     </script>
 </body>
