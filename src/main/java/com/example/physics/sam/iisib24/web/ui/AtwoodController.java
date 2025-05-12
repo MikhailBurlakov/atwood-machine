@@ -18,6 +18,7 @@ public class AtwoodController {
 
     @GetMapping({"/", "/atwood"})
     public String showAtwoodPage() {
+        System.out.println("Get works");
         return "atwood";
     }
 
@@ -33,13 +34,13 @@ public class AtwoodController {
         atwoodMachine.setMassM(BigMass);
         atwoodMachine.setMassm(SmallMass);
         atwoodMachine.setSelectedPlanet(planet);
-
+        System.out.println("Post works");
         double fallTime = atwoodMachine.calculateFallTime();
         double gravity = atwoodMachine.getPlanetGravity();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("fallTime", String.format("%.3f", fallTime));
-        response.put("gravity", String.format("%.2f", gravity));
+        response.put("fallTime", atwoodMachine.calculateFallTime());
+        response.put("gravity", atwoodMachine.getPlanetGravity());
         return response;
     }
 } 

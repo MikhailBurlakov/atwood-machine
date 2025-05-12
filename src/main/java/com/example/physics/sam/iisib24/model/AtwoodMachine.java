@@ -49,11 +49,11 @@ public class AtwoodMachine {
     }
 
     // Методы для совместимости с контроллером
-    public void setMassM(double massM) {
-        this.bigMass = massM;
+    public void setMassM(double BigMass) {
+        this.bigMass = BigMass;
     }
 
-    public void setMassm(double massm) {
-        this.smallMass = massm;
+    public void setMassm(double SmallMass) {
+        this.smallMass = SmallMass;
     }
 } 
