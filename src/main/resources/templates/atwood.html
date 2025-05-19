@@ -260,7 +260,7 @@
 
     <div class="planet-image-container">
         <img src="/images/Earth.png" class="planet-image visible" id="planetImage" alt="Планета">
-        <div id="gravityValue" style="position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 16px; font-weight: bold; color: #333;">g = 9.81 м/с²</div>
+        <div id="gravityValue" style="position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 16px; font-weight: bold; color: #333;"></div>
     </div>
 
     <div class="atwood-machine-container">
@@ -279,11 +279,11 @@
                 <line id="rightRope" x1="175" y1="60" x2="175" y2="220" stroke="black" stroke-width="2" />
                 <!-- Левый груз -->
                 <rect id="leftWeight" x="55" y="220" width="60" height="60" fill="white" stroke="black" stroke-width="2" />
-                <text x="85" y="315" font-family="Arial" font-size="20"
+                <text x="85" y="250" font-family="Arial" font-size="20"
                       text-anchor="middle" dominant-baseline="middle" fill="black">M</text>
                 <!-- Правый груз -->
                 <rect id="rightWeight" x="155" y="220" width="40" height="40" fill="white" stroke="black" stroke-width="2" />
-                <text x="175" y="300" font-family="Arial" font-size="16"
+                <text x="175" y="240" font-family="Arial" font-size="16"
                       text-anchor="middle" dominant-baseline="middle" fill="black">m</text>
                 <!-- Опора -->
                 <rect x="0" y="360" width="260" height="10" fill="#222" />
@@ -365,6 +365,12 @@
                         return;
                     }
 
+                    // Если груз слева больше правого, движения не будет
+                    if (SmallMass > BigMass) {
+                        alert('Внимание: левый груз тяжелее правого. Это приведет к движению системы в обратном направлении.');
+                        return;
+                    }
+
                     const planet = document.querySelector('input[name="planet"]:checked').value;
                     
                     try {
@@ -385,12 +391,7 @@
                         expectedTime = parseFloat(data.fallTime);
                         console.log("Время с бэка (как число):", expectedTime);
                         document.getElementById('gravityValue').textContent = `g = ${data.gravity} м/с²`;
-                        
-                        // Если нижний груз тяжелее, показываем предупреждение
-                        if (SmallMass > BigMass) {
-                            alert('Внимание: нижний груз тяжелее верхнего. Это приведет к движению системы в обратном направлении.');
-                        }
-                        
+
                         startTimer();
                     } catch (error) {
                         alert('Произошла ошибка при расчете времени: ' + error.message);
@@ -462,6 +463,15 @@
             rightRope.setAttribute('y2', startY + 20);
         }
 
+        function updateDisplay(time) {
+            const formattedTime = time.toFixed(3);
+            document.getElementById('timer').textContent = `${formattedTime} с`;
+            const rotation = (time % 60) * 6;
+            hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
+
+            animateWeights(time, expectedTime);
+        }
+
         document.querySelectorAll('input[name="planet"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const planetImage = document.getElementById('planetImage');
@@ -487,15 +497,6 @@
                 }, 300);
             });
         });
-
-        function updateDisplay(time) {
-            const formattedTime = time.toFixed(3);
-            document.getElementById('timer').textContent = `${formattedTime} с`;
-            const rotation = (time % 60) * 6;
-            hand.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
-
-            animateWeights(time, expectedTime);
-        }
 
         // --- Анимация грузика ---
         const leftWeight = document.getElementById('leftWeight');

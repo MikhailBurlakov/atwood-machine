@@ -39,8 +39,8 @@ public class AtwoodController {
         double gravity = atwoodMachine.getPlanetGravity();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("fallTime", atwoodMachine.calculateFallTime());
-        response.put("gravity", atwoodMachine.getPlanetGravity());
+        response.put("fallTime", fallTime);
+        response.put("gravity", gravity);
         return response;
     }
 } 
